@@ -16,9 +16,10 @@ A simple and fast URL shortener service written in Go.
 
 To run this project, you need to have Go and Redis installed on your system.
 
-- Clone this repository: `git clone https://github.com/your-username/url-shortener.git`
+- Clone this repository: `git clone https://github.com/gnik-nadroj/url-shortener`
 - Change directory to the project folder: `cd url-shortener`
-- Install the dependencies: `docker-compose up`
+- Deploy: `docker-compose up` 
+- The server will listen on `http://localhost:3000`
 
 ## Usage
 
