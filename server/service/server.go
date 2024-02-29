@@ -48,10 +48,6 @@ func SetupServer() {
             return
         }
 
-        if count == 0 {
-            count = 1;
-        }
-
         shortenUrl := internal_encoding.Base62Encode(uint64(count))
 
         err = store.Insert(shortenUrl, request.URL)
@@ -60,7 +56,7 @@ func SetupServer() {
             return
         }
 
-        c.JSON(http.StatusOK, gin.H{"shortURL": request.URL})
+        c.JSON(http.StatusOK, gin.H{"shortURL": shortenUrl})
     })
 
     port := common.GetEnv("SERVER_PORT")
