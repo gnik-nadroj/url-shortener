@@ -4,9 +4,18 @@ services:
     build: .
     ports:
       - "3000:3000"
+    environment:
+      - REDIS_URL=redis:6379
     depends_on:
       - redis
   redis:
-    image: "redis:latest"
+    image: redis:latest
+    environment:
+      - REDIS_REPLICATION_MODE=master
     ports:
-      - "6379:6379"
+      - 6379:6379
+    volumes:
+    - redis_data:/data
+
+volumes:
+  redis_data:
