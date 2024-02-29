@@ -1,4 +1,4 @@
-package encoding
+package internal_encoding
 
 import (
     "testing"
@@ -9,11 +9,11 @@ func TestBase62Encode(t *testing.T) {
         input uint64
         output  string
     }{
-        {input: 0, output: "0"},
-        {input: 1, output: "1"},
-        {input: 61, output: "z"},
-        {input: 62, output: "10"},
-        {input: 3844, output: "100"},
+        {input: 0, output: "10000"},
+        {input: 1, output: "10001"},
+        {input: 61, output: "1000z"},
+        {input: 62, output: "10010"},
+        {input: 3844, output: "10100"},
     }
 
     for _, test := range tests {
