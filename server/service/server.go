@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"server/common"
 	"server/data_access"
-	internal_encoding "server/encoding"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -41,22 +41,13 @@ func SetupServer() {
             return
         }
 
-        count, err := store.GetShortenedURLCount();
-
+        err := store.Insert(request.URL, request.URL)
         if err != nil {
             c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not shorten URL"})
             return
         }
 
-        shortenUrl := internal_encoding.Base62Encode(uint64(count))
-
-        err = store.Insert(shortenUrl, request.URL)
-        if err != nil {
-            c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not shorten URL"})
-            return
-        }
-
-        c.JSON(http.StatusOK, gin.H{"shortURL": shortenUrl})
+        c.JSON(http.StatusOK, gin.H{"shortURL": request.URL})
     })
 
     port := common.GetEnv("SERVER_PORT")

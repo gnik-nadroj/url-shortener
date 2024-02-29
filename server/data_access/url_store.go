@@ -33,13 +33,18 @@ func NewURLStore() *URLStore {
 
 func (s *URLStore) Insert(shortURL, originalURL string) error {
     ctx := context.Background()
+
+    // Check if the short URL already exists
     _, err := s.client.Get(ctx, shortURL).Result()
     if err == nil {
+        // If the short URL already exists, return an error
         return errors.New("short URL already exists")
     } else if err != redis.Nil {
+        // If there was an error other than "key does not exist", return it
         return err
     }
 
+    // If the short URL does not exist, insert it
     err = s.client.Set(ctx, shortURL, originalURL, 0).Err()
     if err != nil {
         return err
@@ -112,12 +117,10 @@ func (s *URLStore) GetAllShortenedURLs() ([]URLClickCount, error) {
 func (s *URLStore) GetShortenedURLCount() (int, error) {
     ctx := context.Background()
     result, err := s.client.Get(ctx, "count:shortened").Result()
-    if err == nil {
+    if err != nil {
         return 0, err
-    } else if err == redis.Nil {
-        return 0, nil
-    } 
-    
+    }
+
     count, err := strconv.Atoi(result)
     if err != nil {
         return 0, err
