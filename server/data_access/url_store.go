@@ -96,7 +96,7 @@ func (s *URLStore) GetAllShortenedURLs() ([]URLClickCount, error) {
         if err != nil {
             return nil, err
         }
-        urlClickCounts[i] = URLClickCount{ShortURL: url, ClickCount: clickCount}
+        urlClickCounts[i] = URLClickCount{ShortURL: common.ComposeUrl(url), ClickCount: clickCount}
     }
 
     return urlClickCounts, nil

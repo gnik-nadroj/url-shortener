@@ -2,6 +2,7 @@ package service
 
 import (
 	"net/http"
+	"server/common"
 	"server/data_access"
 	internal_encoding "server/encoding"
 
@@ -19,12 +20,15 @@ func shortener(c *gin.Context, s *data_access.URLStore) {
 
 	count, _ := s.GetShortenedURLCount()
 
-	shortenUrl := internal_encoding.Base62Encode(uint64(count))
-	err := s.Insert(shortenUrl, request.URL)
+	hash := internal_encoding.Base62Encode(uint64(count))
+
+	err := s.Insert(hash, request.URL)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not shorten URL"})
 		return
 	}
+
+	shortenUrl := common.ComposeUrl(hash)
 
 	c.JSON(http.StatusOK, gin.H{"shortURL": shortenUrl})
 }
