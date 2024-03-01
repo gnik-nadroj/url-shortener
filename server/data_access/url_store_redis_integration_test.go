@@ -1,34 +1,8 @@
 package data_access
 
 import (
-	"os"
-	"os/exec"
 	"testing"
 )
-
-//That tests assume the presence of the redis docker image
-
-func TestMain(m *testing.M) {
-    // Setup
-    cmd := exec.Command("docker", "run", "--name", "test-redis", "-p", "6379:6379", "-d", "redis")
-    err := cmd.Run()
-    if err != nil {
-        panic(err)
-    }
-
-    // Run tests
-    code := m.Run()
-
-    // Teardown
-    cmd = exec.Command("docker", "rm", "-f", "test-redis")
-    err = cmd.Run()
-    if err != nil {
-        panic(err)
-    }
-
-    os.Exit(code)
-}
-
 
 func TestNewURLStore(t *testing.T) {
     store := NewURLStore()
@@ -39,7 +13,7 @@ func TestNewURLStore(t *testing.T) {
 
 func TestInsert(t *testing.T) {
     store := NewURLStore()
-    err := store.Insert("shortURL", "originalURL")
+    err := store.Insert("shortURL", "originalURL", user.ID)
     if err != nil {
         t.Errorf("Insert() error = %v; want nil", err)
     }
@@ -88,6 +62,26 @@ func TestGetAllShortenedURLs(t *testing.T) {
     if len(urls) <= 0 {
         t.Errorf("GetAllShortenedURLs() = %v; want > 0", len(urls))
     }
+}
+
+func TestIncrementClicksCount(t *testing.T) {
+    store := NewURLStore()
+
+    err := store.IncrementClicksCount("shortURL")
+
+    if err  != nil {
+        t.Errorf("IncrementClicksCount() error = %v; want nil", err)
+    }
+
+    count, err := store.GetClickCount("shortURL")
+
+    if err  != nil {
+        t.Errorf("IncrementClicksCount() error = %v; want nil", err)
+    }
+
+    if(count != 1) {
+        t.Errorf("IncrementClicksCount() = %v; want 1", count)
+    }  
 }
 
 func TestGetOriginalURL_NotFound(t *testing.T) {

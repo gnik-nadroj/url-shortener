@@ -3,23 +3,30 @@ package data_access
 import (
 	"context"
 	"server/common"
+	"server/model"
 	"strconv"
 
 	"github.com/redis/go-redis/v9"
+)
+
+const (
+	clicksKey      = ":clicks"
+	urlCountsKey   = "count:shortened"
+	urlsIdsListKey = "urls:shortened"
+	originalURLKey = "originalURL"
 )
 
 type URLStore struct {
 	client *redis.Client
 }
 
-type URLClickCount struct {
-    ShortURL   string
-    ClickCount int
+func urlClicks(shortUrl string) string {
+	return shortUrl + clicksKey
 }
 
 func NewURLStore() *URLStore {
-	addr := common.GetEnv("REDIS_URL")
-	password := common.GetEnv("REDIS_PASSWORD")
+	addr := common.GetEnv(common.RedisUrl)
+	password := common.GetEnv(common.RedisPassword)
 
 	client := redis.NewClient(&redis.Options{
 		Addr:     addr,
@@ -30,37 +37,35 @@ func NewURLStore() *URLStore {
 	return &URLStore{client: client}
 }
 
-func (s *URLStore) Insert(shortURL, originalURL string) error {
-    ctx := context.Background()
-
-    err := s.client.Set(ctx, shortURL, originalURL, 0).Err()
-    if err != nil {
-        return err
-    }
-
-    err = s.client.Set(ctx, shortURL+":clicks", "0", 0).Err()
-    if err != nil {
-        return err
-    }
-
-    err = s.client.Incr(ctx, "count:shortened").Err()
-    if err != nil {
-        return err
-    }
-
-    err = s.client.LPush(ctx, "urls:shortened", shortURL).Err()
-
-    return err
-}
-
-func (s *URLStore) GetOriginalURL(shortURL string) (string, error) {
+func (s *URLStore) Insert(urlId, originalURL, user string) error {
 	ctx := context.Background()
-	result, err := s.client.Get(ctx, shortURL).Result()
+
+	err := s.client.HSet(ctx, urlId, originalURLKey, originalURL, userIdKey, user).Err()
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	err = s.client.Incr(ctx, shortURL+":clicks").Err()
+	err = s.client.Set(ctx, urlClicks(urlId), "0", 0).Err()
+	if err != nil {
+		return err
+	}
+
+	err = s.client.Incr(ctx, urlCountsKey).Err()
+	if err != nil {
+		return err
+	}
+
+	err = s.client.LPush(ctx, urlsIdsListKey, urlId).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *URLStore) GetOriginalURL(urlId string) (string, error) {
+	ctx := context.Background()
+	result, err := s.client.HGet(ctx, urlId, originalURLKey).Result()
 	if err != nil {
 		return "", err
 	}
@@ -68,9 +73,20 @@ func (s *URLStore) GetOriginalURL(shortURL string) (string, error) {
 	return result, nil
 }
 
-func (s *URLStore) GetClickCount(shortURL string) (int, error) {
+func (s *URLStore) IncrementClicksCount(urlId string) error {
 	ctx := context.Background()
-	result, err := s.client.Get(ctx, shortURL+":clicks").Result()
+	err := s.client.Incr(ctx, urlClicks(urlId)).Err()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *URLStore) GetClickCount(urlId string) (int, error) {
+	ctx := context.Background()
+	result, err := s.client.Get(ctx, urlClicks(urlId)).Result()
 	if err != nil {
 		return 0, err
 	}
@@ -83,36 +99,45 @@ func (s *URLStore) GetClickCount(shortURL string) (int, error) {
 	return clickCount, nil
 }
 
-func (s *URLStore) GetAllShortenedURLs() ([]URLClickCount, error) {
-    ctx := context.Background()
-    urls, err := s.client.LRange(ctx, "urls:shortened", 0, -1).Result()
-    if err != nil {
-        return nil, err
-    }
+func (s *URLStore) GetAllShortenedURLs() ([]model.Url, error) {
+	ctx := context.Background()
 
-    urlClickCounts := make([]URLClickCount, len(urls))
-    for i, url := range urls {
-        clickCount, err := s.GetClickCount(url)
-        if err != nil {
-            return nil, err
-        }
-        urlClickCounts[i] = URLClickCount{ShortURL: common.ComposeUrl(url), ClickCount: clickCount}
-    }
+	urlIds, err := s.client.LRange(ctx, urlsIdsListKey, 0, -1).Result()
+	if err != nil {
+		return nil, err
+	}
 
-    return urlClickCounts, nil
+	urlClickCounts := make([]model.Url, len(urlIds))
+
+	for i, urlId := range urlIds {
+		clickCount, err := s.GetClickCount(urlId)
+		if err != nil {
+			return nil, err
+		}
+
+		result, err := s.client.HGetAll(ctx, urlId).Result()
+		if err != nil {
+			return nil, err
+		}
+
+		urlClickCounts[i] = model.Url{ShortURL: common.IdToUrl(urlId), OriginalURL: result[originalURLKey], ClickCount: clickCount, UserID: result[userIdKey]}
+	}
+
+	return urlClickCounts, nil
 }
 
 func (s *URLStore) GetShortenedURLCount() (int, error) {
-    ctx := context.Background()
-    result, err := s.client.Get(ctx, "count:shortened").Result()
-    if err != nil {
-        return 0, err
-    }
+	ctx := context.Background()
+	result, err := s.client.Get(ctx, urlCountsKey).Result()
 
-    count, err := strconv.Atoi(result)
-    if err != nil {
-        return 0, err
-    }
+	if err != nil {
+		return 0, err
+	}
 
-    return count, nil
+	count, err := strconv.Atoi(result)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
