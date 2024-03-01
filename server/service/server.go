@@ -48,7 +48,7 @@ func SetupServer() {
         shortener(c, urlStore)
     })
 
-    port := common.GetEnv("SERVER_PORT")
+    port := common.GetEnv(common.ServerPort)
 
     router.Run(":" + port)
 }
