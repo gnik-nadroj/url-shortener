@@ -16,12 +16,5 @@ func redirect(c *gin.Context, s *data_access.URLStore) {
 		return
 	}
 
-	err = s.IncrementClicksCount(shortURL)
-
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "An error occur"})
-		return
-	}
-
 	c.Redirect(http.StatusMovedPermanently, originalURL)
 }

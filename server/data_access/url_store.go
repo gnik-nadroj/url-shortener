@@ -70,6 +70,12 @@ func (s *URLStore) GetOriginalURL(urlId string) (string, error) {
 		return "", err
 	}
 
+	err = s.client.Incr(ctx, urlClicks(urlId)).Err()
+
+	if err != nil {
+		return "", err
+	}
+
 	return result, nil
 }
 

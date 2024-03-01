@@ -79,8 +79,8 @@ func TestIncrementClicksCount(t *testing.T) {
         t.Errorf("IncrementClicksCount() error = %v; want nil", err)
     }
 
-    if(count != 1) {
-        t.Errorf("IncrementClicksCount() = %v; want 1", count)
+    if(count != 2) {
+        t.Errorf("IncrementClicksCount() = %v; want 2", count)
     }  
 }
 
