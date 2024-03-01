@@ -21,7 +21,7 @@ func SetupServer() {
 	config.AllowCredentials = true 
 	router.Use(cors.New(config))
 
-    sessionStore, _ := redis.NewStore(10, "tcp", "localhost:6379", "", []byte("secret"))
+    sessionStore, _ := redis.NewStore(10, "tcp", common.GetEnv(common.RedisUrl), common.GetEnv(common.RedisPassword), []byte(common.GetEnv(common.SessionSecret)))
 	router.Use(sessions.Sessions("mysession", sessionStore))
 
     router.POST("/signup", func(ctx *gin.Context) {

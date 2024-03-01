@@ -51,19 +51,63 @@ This endpoint accepts a GET request and returns a JSON array with all the shorte
 [
   {
     "shortURL": "http://localhost:8080/4fRg3",
+    "OriginalURL": "https://github.com/gnik-nadroj/url-shortener/tree/main/server/encoding",
     "clicks": 12
   },
   {
     "shortURL": "http://localhost:8080/6tUx8",
+    "OriginalURL": "https://google.com",
     "clicks": 7
   },
   {
     "shortURL": "http://localhost:8080/9aFb2",
+    "OriginalURL": "https://bing.com",
     "clicks": 3
   }
 ]
 ```
 The click count for each shortened URL is incremented every time the short URL is visited and redirected to the original URL.
+
+### /signup
+This endpoint accepts a POST request with a JSON body containing the  username and password. For example:
+
+```json
+{
+  "username": "ali",
+  "password": "4dL&a8mok$5TjL&j"
+}
+```
+
+The response will be a JSON object with a status message. For example:
+
+```json
+{
+  "message": "User registered successfully"
+}
+```
+
+### /login
+This endpoint accepts a POST request with a JSON body containing the  username and password . For example:
+
+```json
+{
+  "username": "ali23429",
+  "password": "4dL&a8mok$5TjL&j"
+}
+```
+
+The response will be a JSON object with a status message. For example:
+
+```json
+{
+  "message": "You are logged in"
+}
+```
+The session of the user is manage by the server that send a cookie to the client representing is current session
+
+
+### /logout 
+To logout the user. 
 
 ## License
 This project is licensed under the MIT License - see the LICENSE file for details.
